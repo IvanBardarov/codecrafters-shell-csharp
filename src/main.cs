@@ -13,6 +13,7 @@ class Program
 
             string? command = userInputArray?[0];
             string[]? args = userInputArray?[1..];
+
             if(command == "exit")
             {
                 break;
@@ -23,6 +24,21 @@ class Program
                 {
                     string output = string.Join(" ", args);
                     Console.WriteLine(output);
+                }
+            }
+            else if (command == "type")
+            {
+                if(args != null)
+                {
+                    string output = string.Join(" ", args);
+                    if(output == "echo" || output == "exit" || output == "type")
+                    {
+                        Console.WriteLine($"{output} is a shell builtin");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"{output}: not found");
+                    }
                 }
             }
             else
