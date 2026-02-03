@@ -1,7 +1,15 @@
 using System.Diagnostics;
 
-public class CoreEngine
+public sealed class Commands
 {
+    public readonly string[] BuiltInsArray =
+    {
+        "echo", 
+        "exit",
+        "type",
+        "pwd"
+    };
+
     public string? Command { get; private set; }
     public string[]? Arguments { get; private set; }
     public string? Result { get; private set; }
@@ -13,31 +21,37 @@ public class CoreEngine
 
     public delegate string? SetResult(string? command, string[]? args);
 
-    public CoreEngine(){}
+    public Commands()
+    {
+        
+    }
 
-    public CoreEngine(string[]? userInput)
+    public Commands(string[]? userInput)
     {
         string? command = userInput?[0];
         string[]? args = userInput?[1..];
-        BuiltIns builtIns = new BuiltIns();
+        
         PathEnvironment = Environment.GetEnvironmentVariable("PATH");
         Folders = PathEnvironment?.Split(Path.PathSeparator);
 
         Command = command;
         Arguments = args;
 
-        if (builtIns.BuiltInsArray.Contains(command))
+        if (BuiltInsArray.Contains(command))
         {
             switch (Command)
             {
                 case "exit":
-                    Result = ReturnResult(Exit);
+                    Result = ReturnResult(ExitBuiltIn);
                     break;
                 case "echo":
-                    Result = ReturnResult(Echo);
+                    Result = ReturnResult(EchoBuiltIn);
                     break;
                 case "type":
-                    Result = ReturnResult(Type);
+                    Result = ReturnResult(TypeBuiltIn);
+                    break;
+                case "pwd":
+                    Result = ReturnResult(PwdBuiltIn);
                     break;
                 default:
                     Result = null;
@@ -57,7 +71,7 @@ public class CoreEngine
                         if (IsFileExecutable(Files, Command))
                         {
                             var argsToPass = Arguments != null && Arguments.Length > 0 ?
-                             string.Join(" ", Arguments) : "";
+                            string.Join(" ", Arguments) : "";
                             
                             var executableDir = Path.GetDirectoryName(ExecutableFolder);                                                  
 			  
@@ -70,9 +84,7 @@ public class CoreEngine
                             }); 
 
                             process?.WaitForExit();
-
                             Result = process?.StandardOutput.ReadToEnd().TrimEnd();
-
                             break;
                         }
                     }
@@ -89,30 +101,34 @@ public class CoreEngine
         }
     }
 
-    private string? Exit(string? command, string[]? args)
+    public string? ExitBuiltIn(string? command, string[]? args)
     {
-        Result = null;
-        return Result;
+        string? ret = null;
+        return ret;
     }
 
-    private string? Echo(string? command, string[]? args)
+    private string? EchoBuiltIn(string? command, string[]? args)
     {
+        string? ret = string.Empty;
+
         if(args != null)
         {
-            Result = string.Join(" ", args);            
+            ret = string.Join(" ", args);            
         }
         
-        return Result;
+        return ret;
     }
 
-    private string? Type(string? command, string[]? args)
+    public string? TypeBuiltIn(string? command, string[]? args)
     {
+        string? ret = string.Empty;
+
         if(args != null)
         {
             string arguments = string.Join(" ", args);
-            if(arguments == "echo" || arguments == "exit" || arguments == "type")
+            if(BuiltInsArray.Contains(arguments)/*arguments == "echo" || arguments == "exit" || arguments == "type"*/)
             {
-                Result = $"{arguments} is a shell builtin";
+                ret = $"{arguments} is a shell builtin";
             }
             else
             {
@@ -128,24 +144,30 @@ public class CoreEngine
                             if (IsFileExecutable(files, arguments))
                             {
                                 IsExecutable = true;
-                                Result = $"{arguments} is {Path.Combine(folder, arguments)}";
+                                ret = $"{arguments} is {Path.Combine(folder, arguments)}";
                                 break;
                             }
                         }
                     }
                     if (!IsExecutable)
                     {
-                        Result = $"{arguments}: not found";
+                        ret = $"{arguments}: not found";
                     }
                 }
                 else
                 {
-                    Result = $"{arguments}: not found";
+                    ret = $"{arguments}: not found";
                 }                
             }
         }
 
-        return Result;
+        return ret;
+    }
+
+    public string? PwdBuiltIn(string? command, string[]? args)
+    {        
+        string? ret = Directory.GetCurrentDirectory();
+        return ret;
     }
 
     private bool IsFileExecutable(string[]? files, string? fileName)
@@ -186,4 +208,5 @@ public class CoreEngine
         SetResult _result = result;
         return _result(Command, Arguments);
     }
+
 }

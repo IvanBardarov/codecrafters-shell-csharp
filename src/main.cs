@@ -10,15 +10,15 @@ class Program
 
             string[]? userInputArray = userInput?.Split(' ');
 
-            var coreEngine = new CoreEngine(userInputArray);
+            var command = new Commands(userInputArray);
 
-            if(coreEngine.Result == null)
+            if(command.Result == null)
             {
                 break;
             }
             else
             {
-                Console.WriteLine(coreEngine.Result);
+                Console.WriteLine(command.Result);
             }           
         }
     }
