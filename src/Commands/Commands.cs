@@ -7,7 +7,8 @@ public sealed class Commands
         "echo", 
         "exit",
         "type",
-        "pwd"
+        "pwd",
+        "cd"
     };
 
     public string? Command { get; private set; }
@@ -52,6 +53,9 @@ public sealed class Commands
                     break;
                 case "pwd":
                     Result = ReturnResult(PwdBuiltIn);
+                    break;
+                case "cd":
+                    CdBuiltIn(Command, Arguments);
                     break;
                 default:
                     Result = null;
@@ -103,7 +107,7 @@ public sealed class Commands
 
     public string? ExitBuiltIn(string? command, string[]? args)
     {
-        string? ret = null;
+        string? ret = "exit";
         return ret;
     }
 
@@ -168,6 +172,20 @@ public sealed class Commands
     {        
         string? ret = Directory.GetCurrentDirectory();
         return ret;
+    }
+
+    public void CdBuiltIn(string? command, string[]? args)
+    {        
+        string? path = args == null ? null : string.Join(" ", args);
+
+        if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
+        {
+            Directory.SetCurrentDirectory(path);
+        }
+        else
+        {
+            Console.WriteLine($"cd: {path}: No such file or directory");
+        }
     }
 
     private bool IsFileExecutable(string[]? files, string? fileName)

@@ -12,13 +12,16 @@ class Program
 
             var command = new Commands(userInputArray);
 
-            if(command.Result == null)
+            if(command.Result == "exit")
             {
                 break;
             }
             else
             {
-                Console.WriteLine(command.Result);
+                if (!string.IsNullOrWhiteSpace(command.Result))
+                {
+                    Console.WriteLine(command.Result);
+                }            
             }           
         }
     }
