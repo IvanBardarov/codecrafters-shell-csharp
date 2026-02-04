@@ -175,10 +175,18 @@ public sealed class Commands
     }
 
     public void CdBuiltIn(string? command, string[]? args)
-    {        
+    {     
         string? path = args == null ? null : string.Join(" ", args);
 
-        if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
+        if(path == "~")
+        {
+            path = Environment.GetEnvironmentVariable("HOME") 
+                ?? Environment.GetEnvironmentVariable("USERPROFILE") 
+                ?? throw new InvalidOperationException("No HOME or USERPROFILE environment variable found.");
+
+            Directory.SetCurrentDirectory(path);
+        }
+        else if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
         {
             Directory.SetCurrentDirectory(path);
         }
