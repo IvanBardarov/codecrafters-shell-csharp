@@ -6,11 +6,15 @@ class Program
         {
             Console.Write("$ ");
             
-            string? userInput = Console.ReadLine();
+            string? consoleInput = Console.ReadLine();
+            string userInput = string.Empty;
 
-            string[]? userInputArray = userInput?.Split(' ');
+            if (!string.IsNullOrWhiteSpace(consoleInput))
+            {
+                userInput = consoleInput;
+            }
 
-            var command = new Commands(userInputArray);
+            var command = new Commands(userInput);
 
             if(command.Result == "exit")
             {
@@ -20,8 +24,8 @@ class Program
             {
                 if (!string.IsNullOrWhiteSpace(command.Result))
                 {
-                    Console.WriteLine(command.Result);
-                }            
+                    Console.WriteLine(string.Join(" ", command.Result)); 
+                }        
             }           
         }
     }

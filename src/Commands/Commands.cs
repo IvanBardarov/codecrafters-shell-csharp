@@ -12,7 +12,7 @@ public sealed class Commands
     };
 
     public string? Command { get; private set; }
-    public string[]? Arguments { get; private set; }
+    public List<string> Arguments { get; private set; } = new List<string>();
     public string? Result { get; private set; }
     public string? PathEnvironment { get; private set; }
     public string[]? Folders { get; private set; }  
@@ -20,117 +20,128 @@ public sealed class Commands
     public bool IsExecutable { get; private set; }  
     public string? ExecutableFolder { get; private set; }
 
-    public delegate string? SetResult(string? command, string[]? args);
+    public delegate string SetResult(List<string> args);
 
-    public Commands()
+    public Commands(){ }
+
+    public Commands(string userInput)
     {
-        
-    }
-
-    public Commands(string[]? userInput)
-    {
-        string? command = userInput?[0];
-        string[]? args = userInput?[1..];
-        
-        PathEnvironment = Environment.GetEnvironmentVariable("PATH");
-        Folders = PathEnvironment?.Split(Path.PathSeparator);
-
-        Command = command;
-        Arguments = args;
-
-        if (BuiltInsArray.Contains(command))
+        if(!string.IsNullOrWhiteSpace(userInput))
         {
-            switch (Command)
-            {
-                case "exit":
-                    Result = ReturnResult(ExitBuiltIn);
-                    break;
-                case "echo":
-                    Result = ReturnResult(EchoBuiltIn);
-                    break;
-                case "type":
-                    Result = ReturnResult(TypeBuiltIn);
-                    break;
-                case "pwd":
-                    Result = ReturnResult(PwdBuiltIn);
-                    break;
-                case "cd":
-                    CdBuiltIn(Command, Arguments);
-                    break;
-                default:
-                    Result = null;
-                    break;
-            }
-        }
-        else
-        {
-            if(Folders != null)
-            {
-                foreach (var folder in Folders)
-                {
-                    if (Directory.Exists(folder))
-                    {
-                        Files = Directory.GetFiles(folder);
+            string[] userInputList = userInput.Split(' ');
+            string command = userInputList[0];        
+            string argsString = userInputList.Length > 1 ? string.Join(" ", userInputList[1..]) : string.Empty;
 
-                        if (IsFileExecutable(Files, Command))
-                        {
-                            var argsToPass = Arguments != null && Arguments.Length > 0 ?
-                            string.Join(" ", Arguments) : "";
-                            
-                            var executableDir = Path.GetDirectoryName(ExecutableFolder);                                                  
-			  
-                            using var process = Process.Start(new ProcessStartInfo {
-                                FileName = Command,
-                                Arguments = argsToPass,
-                                WorkingDirectory = executableDir,
-                                UseShellExecute = false, 
-                                RedirectStandardOutput = true 
-                            }); 
+            PathEnvironment = Environment.GetEnvironmentVariable("PATH");
+            Folders = PathEnvironment?.Split(Path.PathSeparator);
 
-                            process?.WaitForExit();
-                            Result = process?.StandardOutput.ReadToEnd().TrimEnd();
-                            break;
-                        }
-                    }
-                }
-                if(Result == null)
+            Command = command;
+            Arguments = Helpers.ParseUserInput(command, argsString);            
+
+            if (BuiltInsArray.Contains(Command))
+            {
+                switch (Command)
                 {
-                    Result = $"{command}: command not found";
+                    case "exit":
+                        Result = ReturnResult(ExitBuiltIn);
+                        break;
+                    case "echo":
+                        Result = ReturnResult(EchoBuiltIn);
+                        break;
+                    case "type":
+                        Result = ReturnResult(TypeBuiltIn);
+                        break;
+                    case "pwd":
+                        Result = ReturnResult(PwdBuiltIn);
+                        break;
+                    case "cd":
+                        CdBuiltIn(Arguments);
+                        break;
+                    default:
+                        break;
                 }
             }
             else
             {
-                Result = $"{command}: command not found";
-            }            
+                if(Folders != null)
+                {
+                    foreach (var folder in Folders)
+                    {
+                        if (Directory.Exists(folder))
+                        {
+                            Files = Directory.GetFiles(folder);
+
+                            if (IsFileExecutable(Files, Command))
+                            {                          
+                                var executableDir = Path.GetDirectoryName(ExecutableFolder);                                                  
+                
+                                var tokens = new List<string>();
+
+                                for(var i = 0; i < Arguments.Count; i++)
+                                {
+                                    if(Arguments[i].Contains(' '))
+                                    {
+                                        tokens.Add($"\"{Arguments[i]}\"");
+                                    }
+                                    else
+                                    {
+                                        tokens.Add(Arguments[i]);
+                                    }
+                                }
+
+                                using var process = Process.Start(new ProcessStartInfo {
+                                    FileName = Command,
+                                    Arguments = string.Join(" ", tokens),
+                                    WorkingDirectory = executableDir,
+                                    UseShellExecute = false, 
+                                    RedirectStandardOutput = true 
+                                }); 
+
+                                process?.WaitForExit();
+                                Result = process?.StandardOutput.ReadToEnd().TrimEnd();
+                                break;
+                            }
+                        }
+                    }
+                    if(Result == null)
+                    {
+                        Result = $"{command}: command not found";
+                    }
+                }
+                else
+                {
+                    Result = $"{command}: command not found";
+                }            
+            }    
         }
     }
 
-    public string? ExitBuiltIn(string? command, string[]? args)
+    public string ExitBuiltIn(List<string> args)
     {
-        string? ret = "exit";
+        var ret = "exit";
         return ret;
     }
 
-    private string? EchoBuiltIn(string? command, string[]? args)
+    private string EchoBuiltIn(List<string> args)
     {
-        string? ret = string.Empty;
+        string ret = string.Empty;
 
-        if(args != null)
+        if(args != null && args.Count > 0)
         {
-            ret = string.Join(" ", args);            
+            ret = string.Join(" ", args);    
         }
         
         return ret;
     }
 
-    public string? TypeBuiltIn(string? command, string[]? args)
+    public string TypeBuiltIn(List<string> args)
     {
-        string? ret = string.Empty;
+        string ret = string.Empty;
 
-        if(args != null)
+        if(args != null && args.Count > 0)
         {
             string arguments = string.Join(" ", args);
-            if(BuiltInsArray.Contains(arguments)/*arguments == "echo" || arguments == "exit" || arguments == "type"*/)
+            if(BuiltInsArray.Contains(arguments))
             {
                 ret = $"{arguments} is a shell builtin";
             }
@@ -168,15 +179,15 @@ public sealed class Commands
         return ret;
     }
 
-    public string? PwdBuiltIn(string? command, string[]? args)
+    public string PwdBuiltIn(List<string> args)
     {        
-        string? ret = Directory.GetCurrentDirectory();
+        var ret = Directory.GetCurrentDirectory();
         return ret;
     }
 
-    public void CdBuiltIn(string? command, string[]? args)
+    public void CdBuiltIn(List<string> args)
     {     
-        string? path = args == null ? null : string.Join(" ", args);
+        string path = string.Join(" ", args);
 
         if(path == "~")
         {
@@ -216,7 +227,7 @@ public sealed class Commands
                 else
                 {
                     var extension = Path.GetExtension(e).ToLowerInvariant();
-                    ret = extension is ".exe" or ".bat" or ".cmd" or "ps1" or ".dll";
+                    ret = extension is ".exe" or ".bat" or ".cmd" or ".ps1" or ".dll";
                 }
                 if (ret)
                 {
@@ -229,10 +240,10 @@ public sealed class Commands
         return ret;
     }
 
-    private string? ReturnResult(SetResult result)
+    private string ReturnResult(SetResult result)
     {
         SetResult _result = result;
-        return _result(Command, Arguments);
+        return _result(Arguments);
     }
 
 }
