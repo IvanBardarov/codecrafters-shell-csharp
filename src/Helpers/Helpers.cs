@@ -12,21 +12,33 @@ public static class Helpers
 
         var inputChars = input.ToCharArray();
         var isInsideSingleQuotes = false;
-        var isInsideDoubleQuotes = false;
+        var isInsideDoubleQuotes = false;        
 
         for (var i = 0; i < inputChars.Length; i++)
         {
-            var c = inputChars[i];
+            var currentChar = inputChars[i];            
 
-            if (c == '\'' && !isInsideDoubleQuotes)
-            {
-                isInsideSingleQuotes = !isInsideSingleQuotes;                
+            if(currentChar == '\\' && !isInsideDoubleQuotes && !isInsideSingleQuotes)
+            {  
+                if(i + 1 < inputChars.Length)
+                {
+                    i++;
+                    tmpStr += inputChars[i];
+                }
+                else
+                {
+                    tmpStr += currentChar;
+                }      
             }
-            else if(c == '"' && !isInsideSingleQuotes)
+            else if (currentChar == '\'' && !isInsideDoubleQuotes)
+            {
+                isInsideSingleQuotes = !isInsideSingleQuotes;            
+            }
+            else if(currentChar == '"' && !isInsideSingleQuotes)
             {
                 isInsideDoubleQuotes = !isInsideDoubleQuotes;
             }
-            else if (char.IsWhiteSpace(c) &&
+            else if (char.IsWhiteSpace(currentChar) &&
                  !isInsideSingleQuotes &&
                  !isInsideDoubleQuotes)
             {
@@ -38,7 +50,7 @@ public static class Helpers
             }
             else
             {
-                tmpStr += c;
+                tmpStr += currentChar;
             }
         }
 
