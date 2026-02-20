@@ -10,23 +10,25 @@ public static class Helpers
             return ret;
         }
 
-        var inputChars = input.ToCharArray().ToList();
-        var lastSingleQuoteIndex = inputChars.FindLastIndex(c => c == '\'');
+        var inputChars = input.ToCharArray();
         var isInsideSingleQuotes = false;
+        var isInsideDoubleQuotes = false;
 
-        for (var i = 0; i < inputChars.Count; i++)
+        for (var i = 0; i < inputChars.Length; i++)
         {
             var c = inputChars[i];
 
-            if(c == '\'' && i >= lastSingleQuoteIndex)
-            {                
-                isInsideSingleQuotes = false;
-            }
-            else if (c == '\'')
+            if (c == '\'' && !isInsideDoubleQuotes)
             {
                 isInsideSingleQuotes = !isInsideSingleQuotes;                
             }
-            else if (char.IsWhiteSpace(c) && !isInsideSingleQuotes)
+            else if(c == '"' && !isInsideSingleQuotes)
+            {
+                isInsideDoubleQuotes = !isInsideDoubleQuotes;
+            }
+            else if (char.IsWhiteSpace(c) &&
+                 !isInsideSingleQuotes &&
+                 !isInsideDoubleQuotes)
             {
                 if (!string.IsNullOrWhiteSpace(tmpStr))
                 {
