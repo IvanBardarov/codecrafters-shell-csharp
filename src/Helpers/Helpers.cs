@@ -3,7 +3,7 @@ public static class Helpers
     public static List<string> ParseUserInput(string command, string input)
     {
         var ret = new List<string>();
-        var tmpStr = string.Empty;
+        var strBldr = new System.Text.StringBuilder();
 
         if (string.IsNullOrWhiteSpace(input))
         {
@@ -23,11 +23,11 @@ public static class Helpers
                 if(i + 1 < inputChars.Length)
                 {
                     i++;
-                    tmpStr += inputChars[i];
+                    strBldr.Append(inputChars[i]);
                 }
                 else
                 {
-                    tmpStr += currentChar;
+                    strBldr.Append(inputChars[i]);
                 }      
             }
             else if (currentChar == '\'' && !isInsideDoubleQuotes)
@@ -42,21 +42,21 @@ public static class Helpers
                  !isInsideSingleQuotes &&
                  !isInsideDoubleQuotes)
             {
-                if (!string.IsNullOrWhiteSpace(tmpStr))
+                if (strBldr.Length > 0)
                 {
-                    ret.Add(tmpStr);
-                    tmpStr = string.Empty;
+                    ret.Add(strBldr.ToString());
+                    strBldr.Clear();
                 }
             }
             else
             {
-                tmpStr += currentChar;
+                strBldr.Append(currentChar);
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(tmpStr))
+        if (strBldr.Length > 0)
         {
-            ret.Add(tmpStr);
+            ret.Add(strBldr.ToString());
         }
         
         return ret;

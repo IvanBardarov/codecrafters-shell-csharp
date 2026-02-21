@@ -28,15 +28,21 @@ public sealed class Commands
     {
         if(!string.IsNullOrWhiteSpace(userInput))
         {
-            string[] userInputList = userInput.Split(' ');
-            string command = userInputList[0];        
-            string argsString = userInputList.Length > 1 ? string.Join(" ", userInputList[1..]) : string.Empty;
-
             PathEnvironment = Environment.GetEnvironmentVariable("PATH");
             Folders = PathEnvironment?.Split(Path.PathSeparator);
 
-            Command = command;
-            Arguments = Helpers.ParseUserInput(command, argsString);            
+            var tokens = Helpers.ParseUserInput(string.Empty, userInput);
+
+            if (tokens.Count > 0)
+            {
+                Command = tokens[0];
+                Arguments = tokens.Skip(1).ToList();
+            }
+            else
+            {
+                Command = null;
+                Arguments = new List<string>();
+            }          
 
             if (BuiltInsArray.Contains(Command))
             {
@@ -75,42 +81,51 @@ public sealed class Commands
                             {                          
                                 var executableDir = Path.GetDirectoryName(ExecutableFolder);                                                  
                 
-                                var tokens = new List<string>();
-
-                                for(var i = 0; i < Arguments.Count; i++)
+                                var startInfo = new ProcessStartInfo
                                 {
-                                    if(Arguments[i].Contains(' '))
+                                    FileName = Command,
+                                    UseShellExecute = false,
+                                    WorkingDirectory = executableDir,
+                                    RedirectStandardOutput = true,
+                                    RedirectStandardError = true
+                                };
+
+                                foreach(var arg in Arguments)
+                                {
+                                    startInfo.ArgumentList.Add(arg);                               
+                                }
+
+                                using var process = Process.Start(startInfo);
+
+                                if (process != null)
+                                {
+                                    process?.WaitForExit();
+
+                                    var stdout = process?.StandardOutput.ReadToEnd();
+                                    var stderr = process?.StandardError.ReadToEnd();
+
+                                    if (!string.IsNullOrWhiteSpace(stderr))
                                     {
-                                        tokens.Add($"\"{Arguments[i]}\"");
+                                        Result = stderr.TrimEnd();
                                     }
                                     else
                                     {
-                                        tokens.Add(Arguments[i]);
+                                        Result = stdout?.TrimEnd();
                                     }
                                 }
 
-                                using var process = Process.Start(new ProcessStartInfo {
-                                    FileName = Command,
-                                    Arguments = string.Join(" ", tokens),
-                                    WorkingDirectory = executableDir,
-                                    UseShellExecute = false, 
-                                    RedirectStandardOutput = true 
-                                }); 
-
-                                process?.WaitForExit();
-                                Result = process?.StandardOutput.ReadToEnd().TrimEnd();
                                 break;
                             }
                         }
                     }
                     if(Result == null)
                     {
-                        Result = $"{command}: command not found";
+                        Result = $"{Command}: command not found";
                     }
                 }
                 else
                 {
-                    Result = $"{command}: command not found";
+                    Result = $"{Command}: command not found";
                 }            
             }    
         }
