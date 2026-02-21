@@ -30,6 +30,21 @@ public static class Helpers
                     strBldr.Append(inputChars[i]);
                 }      
             }
+            else if(currentChar =='\\' && isInsideDoubleQuotes)
+            {
+                if(i + 1 < inputChars.Length)
+                {
+                    i++;
+                    if(inputChars[i] == '\\' || inputChars[i]  == '"')
+                    {
+                        strBldr.Append(inputChars[i]);
+                    }                    
+                }
+                else
+                {
+                    strBldr.Append(inputChars[i]);
+                }
+            }
             else if (currentChar == '\'' && !isInsideDoubleQuotes)
             {
                 isInsideSingleQuotes = !isInsideSingleQuotes;            
