@@ -41,7 +41,7 @@ public sealed class Commands
             {
                 Command = tokens[0];
                 var operatorIndex = tokens.FindIndex(o => o == ">" 
-                    || o == "1>" || o == "2>" || o == ">>"|| o == "1>>");
+                    || o == "1>" || o == "2>" || o == ">>"|| o == "1>>" || o == "2>>");
                 if(operatorIndex > 1)
                 {
                     Arguments = tokens.Skip(1)
@@ -60,6 +60,9 @@ public sealed class Commands
                         case ">>":
                         case "1>>":
                             TypeOfOperator = TypeOfOperator.AppendStdOut;
+                            break;
+                        case "2>>":
+                            TypeOfOperator = TypeOfOperator.AppendStdErr;
                             break;
                         default:
                             TypeOfOperator = TypeOfOperator.None;

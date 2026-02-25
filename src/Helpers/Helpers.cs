@@ -111,7 +111,8 @@ public static class Helpers
                 fullPath = Path.Combine(root, directory, fileName);
                 stdOutTxt = string.IsNullOrWhiteSpace(stdOutTxt) ? "" : stdOutTxt + Environment.NewLine;
 
-                if(typeOfOperator == TypeOfOperator.AppendStdOut)
+                if(typeOfOperator == TypeOfOperator.AppendStdOut 
+                    || typeOfOperator == TypeOfOperator.AppendStdErr)
                 {
                     File.AppendAllText(fullPath, stdOutTxt);
                 }
