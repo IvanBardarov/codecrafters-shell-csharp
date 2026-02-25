@@ -22,10 +22,30 @@ class Program
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(command.Result))
+                if (!string.IsNullOrWhiteSpace(command.RedirectToFile))
+                {                    
+                    if (command.Error && string.IsNullOrWhiteSpace(command.Result))
+                    {
+                        Console.WriteLine(command.ErrorMessage);
+                    }
+                    else if(command.Error && !string.IsNullOrWhiteSpace(command.Result))
+                    {
+                        Console.WriteLine(command.ErrorMessage);
+                        Helpers.RedirectToFile(command.Result ?? "", command.RedirectToFile);
+                    }
+                    else
+                    {
+                        Helpers.RedirectToFile(command.Result ?? "", command.RedirectToFile);
+                    }
+                }
+                else if(!string.IsNullOrWhiteSpace(command.Result))
                 {
-                    Console.WriteLine(string.Join(" ", command.Result)); 
-                }        
+                    Console.WriteLine(string.Join(" ", command.Result));
+                } 
+                else if(!string.IsNullOrWhiteSpace(command.ErrorMessage))
+                {
+                    Console.WriteLine(string.Join(" ", command.ErrorMessage));
+                }
             }           
         }
     }

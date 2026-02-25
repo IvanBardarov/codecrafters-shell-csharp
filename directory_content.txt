@@ -1,0 +1,11 @@
+README.md
+bin/
+codecrafters-shell.csproj
+codecrafters-shell.sln
+codecrafters.yml
+directory_content.txt
+global.json
+obj/
+src/
+tmp/
+your_program.sh*

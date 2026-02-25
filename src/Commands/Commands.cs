@@ -19,6 +19,9 @@ public sealed class Commands
     public string[]? Files { get; private set; }
     public bool IsExecutable { get; private set; }  
     public string? ExecutableFolder { get; private set; }
+    public string? RedirectToFile { get; private set; }
+    public bool Error { get; private set; }
+    public string? ErrorMessage { get; private set; }
 
     public delegate string SetResult(List<string> args);
 
@@ -36,12 +39,27 @@ public sealed class Commands
             if (tokens.Count > 0)
             {
                 Command = tokens[0];
-                Arguments = tokens.Skip(1).ToList();
+                var redirectToFileIndex = tokens.FindIndex(o => o == ">" || o == "1>");
+                if(redirectToFileIndex > 1)
+                {
+                    Arguments = tokens.Skip(1)
+                        .Take(redirectToFileIndex - 1)
+                        .ToList();
+                    RedirectToFile = string.Join(" ", tokens
+                        .Skip(redirectToFileIndex + 1)
+                        .ToList());
+                }
+                else
+                {
+                    Arguments = tokens.Skip(1).ToList();
+                    RedirectToFile = null;
+                }
             }
             else
             {
                 Command = null;
                 Arguments = new List<string>();
+                RedirectToFile = null;
             }          
 
             if (BuiltInsArray.Contains(Command))
@@ -78,41 +96,8 @@ public sealed class Commands
                             Files = Directory.GetFiles(folder);
 
                             if (IsFileExecutable(Files, Command))
-                            {                          
-                                var executableDir = Path.GetDirectoryName(ExecutableFolder);                                                  
-                
-                                var startInfo = new ProcessStartInfo
-                                {
-                                    FileName = Command,
-                                    UseShellExecute = false,
-                                    WorkingDirectory = executableDir,
-                                    RedirectStandardOutput = true,
-                                    RedirectStandardError = true
-                                };
-
-                                foreach(var arg in Arguments)
-                                {
-                                    startInfo.ArgumentList.Add(arg);                               
-                                }
-
-                                using var process = Process.Start(startInfo);
-
-                                if (process != null)
-                                {
-                                    process?.WaitForExit();
-
-                                    var stdout = process?.StandardOutput.ReadToEnd();
-                                    var stderr = process?.StandardError.ReadToEnd();
-
-                                    if (!string.IsNullOrWhiteSpace(stderr))
-                                    {
-                                        Result = stderr.TrimEnd();
-                                    }
-                                    else
-                                    {
-                                        Result = stdout?.TrimEnd();
-                                    }
-                                }
+                            {
+                                using Process? process = ExternalCommand();
 
                                 break;
                             }
@@ -129,6 +114,42 @@ public sealed class Commands
                 }            
             }    
         }
+    }
+
+    private Process? ExternalCommand()
+    {
+        var executableDir = Path.GetDirectoryName(ExecutableFolder);
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = Command,
+            UseShellExecute = false,
+            WorkingDirectory = executableDir,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+
+        foreach (var arg in Arguments)
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
+        var process = Process.Start(startInfo);
+
+        if (process != null)
+        {
+            process?.WaitForExit();
+
+            var stdout = process?.StandardOutput.ReadToEnd();
+            var stderr = process?.StandardError.ReadToEnd();
+
+            Result = stdout?.TrimEnd();
+            ErrorMessage = stderr?.TrimEnd();
+
+            if (!string.IsNullOrWhiteSpace(stderr))
+                Error = true;
+        }
+
+        return process;
     }
 
     public string ExitBuiltIn(List<string> args)
