@@ -26,16 +26,33 @@ class Program
                 {                    
                     if (command.Error && string.IsNullOrWhiteSpace(command.Result))
                     {
-                        Console.WriteLine(command.ErrorMessage);
+                        if(command.TypeRedirection == TypeRedirection.StdOut)
+                            Console.WriteLine(command.ErrorMessage);
+                        else if(command.TypeRedirection == TypeRedirection.StdErr)                        
+                            Helpers.RedirectToFile(command.ErrorMessage ?? "", command.RedirectToFile);
                     }
                     else if(command.Error && !string.IsNullOrWhiteSpace(command.Result))
                     {
-                        Console.WriteLine(command.ErrorMessage);
-                        Helpers.RedirectToFile(command.Result ?? "", command.RedirectToFile);
+                        if(command.TypeRedirection == TypeRedirection.StdOut)
+                        {
+                            Console.WriteLine(command.ErrorMessage);
+                            Helpers.RedirectToFile(command.Result ?? "", command.RedirectToFile);
+                        }
+                        else if(command.TypeRedirection == TypeRedirection.StdErr)
+                        {
+                            Console.WriteLine(command.Result);
+                            Helpers.RedirectToFile(command.ErrorMessage ?? "", command.RedirectToFile);
+                        }
                     }
                     else
                     {
-                        Helpers.RedirectToFile(command.Result ?? "", command.RedirectToFile);
+                        if(command.TypeRedirection == TypeRedirection.StdOut)
+                            Helpers.RedirectToFile(command.Result ?? "", command.RedirectToFile);
+                        else if(command.TypeRedirection == TypeRedirection.StdErr)
+                        {
+                            Console.WriteLine(command.Result);
+                            Helpers.RedirectToFile(string.Empty, command.RedirectToFile);
+                        }                                                        
                     }
                 }
                 else if(!string.IsNullOrWhiteSpace(command.Result))
