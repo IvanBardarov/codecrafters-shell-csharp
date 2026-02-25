@@ -26,33 +26,37 @@ class Program
                 {                    
                     if (command.Error && string.IsNullOrWhiteSpace(command.Result))
                     {
-                        if(command.TypeRedirection == TypeRedirection.StdOut)
+                        if(command.TypeOfOperator == TypeOfOperator.RedirectStdOut)
                             Console.WriteLine(command.ErrorMessage);
-                        else if(command.TypeRedirection == TypeRedirection.StdErr)                        
-                            Helpers.RedirectToFile(command.ErrorMessage ?? "", command.RedirectToFile);
+                        else if(command.TypeOfOperator == TypeOfOperator.RedirectStdErr)                        
+                            Helpers.RedirectToFile(command.ErrorMessage ?? "", command.RedirectToFile, command.TypeOfOperator);
                     }
                     else if(command.Error && !string.IsNullOrWhiteSpace(command.Result))
                     {
-                        if(command.TypeRedirection == TypeRedirection.StdOut)
+                        if(command.TypeOfOperator == TypeOfOperator.RedirectStdOut)
                         {
                             Console.WriteLine(command.ErrorMessage);
-                            Helpers.RedirectToFile(command.Result ?? "", command.RedirectToFile);
+                            Helpers.RedirectToFile(command.Result ?? "", command.RedirectToFile, command.TypeOfOperator);
                         }
-                        else if(command.TypeRedirection == TypeRedirection.StdErr)
+                        else if(command.TypeOfOperator == TypeOfOperator.RedirectStdErr)
                         {
                             Console.WriteLine(command.Result);
-                            Helpers.RedirectToFile(command.ErrorMessage ?? "", command.RedirectToFile);
+                            Helpers.RedirectToFile(command.ErrorMessage ?? "", command.RedirectToFile, command.TypeOfOperator);
                         }
                     }
                     else
                     {
-                        if(command.TypeRedirection == TypeRedirection.StdOut)
-                            Helpers.RedirectToFile(command.Result ?? "", command.RedirectToFile);
-                        else if(command.TypeRedirection == TypeRedirection.StdErr)
+                        if(command.TypeOfOperator == TypeOfOperator.RedirectStdOut)
+                            Helpers.RedirectToFile(command.Result ?? "", command.RedirectToFile, command.TypeOfOperator);
+                        else if(command.TypeOfOperator == TypeOfOperator.RedirectStdErr)
                         {
                             Console.WriteLine(command.Result);
-                            Helpers.RedirectToFile(string.Empty, command.RedirectToFile);
-                        }                                                        
+                            Helpers.RedirectToFile(string.Empty, command.RedirectToFile, command.TypeOfOperator);
+                        }    
+                        else if(command.TypeOfOperator == TypeOfOperator.AppendStdOut)
+                        {
+                            Helpers.RedirectToFile(command.Result ?? "", command.RedirectToFile, command.TypeOfOperator);
+                        }                                                    
                     }
                 }
                 else if(!string.IsNullOrWhiteSpace(command.Result))

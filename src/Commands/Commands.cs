@@ -20,7 +20,7 @@ public sealed class Commands
     public bool IsExecutable { get; private set; }  
     public string? ExecutableFolder { get; private set; }
     public string? RedirectToFile { get; private set; }
-    public TypeRedirection TypeRedirection { get; private set; }
+    public TypeOfOperator TypeOfOperator { get; private set; }
     public bool Error { get; private set; }
     public string? ErrorMessage { get; private set; }
 
@@ -40,30 +40,34 @@ public sealed class Commands
             if (tokens.Count > 0)
             {
                 Command = tokens[0];
-                var redirectToFileIndex = tokens.FindIndex(o => o == ">" 
-                    || o == "1>" || o == "2>");
-                if(redirectToFileIndex > 1)
+                var operatorIndex = tokens.FindIndex(o => o == ">" 
+                    || o == "1>" || o == "2>" || o == ">>"|| o == "1>>");
+                if(operatorIndex > 1)
                 {
                     Arguments = tokens.Skip(1)
-                        .Take(redirectToFileIndex - 1)
+                        .Take(operatorIndex - 1)
                         .ToList();
-                        
-                    switch (tokens[redirectToFileIndex])
+
+                    switch (tokens[operatorIndex])
                     {
                         case ">":
                         case "1>":
-                            TypeRedirection = TypeRedirection.StdOut;
+                            TypeOfOperator = TypeOfOperator.RedirectStdOut;
                             break;
                         case "2>":
-                            TypeRedirection = TypeRedirection.StdErr;
+                            TypeOfOperator = TypeOfOperator.RedirectStdErr;
+                            break;
+                        case ">>":
+                        case "1>>":
+                            TypeOfOperator = TypeOfOperator.AppendStdOut;
                             break;
                         default:
-                            TypeRedirection = TypeRedirection.None;
+                            TypeOfOperator = TypeOfOperator.None;
                             break;
                     }
 
                     RedirectToFile = string.Join(" ", tokens
-                        .Skip(redirectToFileIndex + 1)
+                        .Skip(operatorIndex + 1)
                         .ToList());
                 }
                 else

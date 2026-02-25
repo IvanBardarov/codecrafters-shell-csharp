@@ -1,6 +1,7 @@
-public enum TypeRedirection : short
+public enum TypeOfOperator : short
 {
     None = 0,
-    StdOut = 1,
-    StdErr = 2
+    RedirectStdOut = 1,
+    RedirectStdErr = 2,
+    AppendStdOut = 3
 }

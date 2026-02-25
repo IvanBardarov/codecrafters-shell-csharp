@@ -79,7 +79,7 @@ public static class Helpers
         return ret;
     }
 
-    public static void RedirectToFile(string stdOutTxt, string filePath)
+    public static void RedirectToFile(string stdOutTxt, string filePath, TypeOfOperator typeOfOperator)
     {
         try
         {
@@ -109,7 +109,16 @@ public static class Helpers
             if (!string.IsNullOrWhiteSpace(directory))
             {
                 fullPath = Path.Combine(root, directory, fileName);
-                File.WriteAllText(fullPath, stdOutTxt);
+                stdOutTxt = string.IsNullOrWhiteSpace(stdOutTxt) ? "" : stdOutTxt + Environment.NewLine;
+
+                if(typeOfOperator == TypeOfOperator.AppendStdOut)
+                {
+                    File.AppendAllText(fullPath, stdOutTxt);
+                }
+                else
+                {
+                    File.WriteAllText(fullPath, stdOutTxt);
+                }                
             }
         }
         catch(Exception ex)
