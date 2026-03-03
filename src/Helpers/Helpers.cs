@@ -1,4 +1,4 @@
-using Microsoft.Win32.SafeHandles;
+using System.Text;
 
 public static class Helpers
 {
@@ -14,15 +14,15 @@ public static class Helpers
 
         var inputChars = input.ToCharArray();
         var isInsideSingleQuotes = false;
-        var isInsideDoubleQuotes = false;        
+        var isInsideDoubleQuotes = false;
 
         for (var i = 0; i < inputChars.Length; i++)
         {
-            var currentChar = inputChars[i];            
+            var currentChar = inputChars[i];
 
-            if(currentChar == '\\' && !isInsideDoubleQuotes && !isInsideSingleQuotes)
-            {  
-                if(i + 1 < inputChars.Length)
+            if (currentChar == '\\' && !isInsideDoubleQuotes && !isInsideSingleQuotes)
+            {
+                if (i + 1 < inputChars.Length)
                 {
                     i++;
                     strBldr.Append(inputChars[i]);
@@ -30,17 +30,17 @@ public static class Helpers
                 else
                 {
                     strBldr.Append(inputChars[i]);
-                }      
+                }
             }
-            else if(currentChar =='\\' && isInsideDoubleQuotes)
+            else if (currentChar == '\\' && isInsideDoubleQuotes)
             {
-                if(i + 1 < inputChars.Length)
+                if (i + 1 < inputChars.Length)
                 {
                     i++;
-                    if(inputChars[i] == '\\' || inputChars[i]  == '"')
+                    if (inputChars[i] == '\\' || inputChars[i] == '"')
                     {
                         strBldr.Append(inputChars[i]);
-                    }                    
+                    }
                 }
                 else
                 {
@@ -49,9 +49,9 @@ public static class Helpers
             }
             else if (currentChar == '\'' && !isInsideDoubleQuotes)
             {
-                isInsideSingleQuotes = !isInsideSingleQuotes;            
+                isInsideSingleQuotes = !isInsideSingleQuotes;
             }
-            else if(currentChar == '"' && !isInsideSingleQuotes)
+            else if (currentChar == '"' && !isInsideSingleQuotes)
             {
                 isInsideDoubleQuotes = !isInsideDoubleQuotes;
             }
@@ -75,22 +75,22 @@ public static class Helpers
         {
             ret.Add(strBldr.ToString());
         }
-        
+
         return ret;
     }
 
-    public static void RedirectToFile(string stdOutTxt, string filePath, TypeOfOperator typeOfOperator)
+    public static void RedirectToFile(string? stdOutTxt, string filePath, TypeOfOperator typeOfOperator)
     {
         try
         {
-            if(!IsValidFilePath(filePath))
+            if (!IsValidFilePath(filePath))
                 throw new Exception($"Path \"{filePath}\" is not valid!");
 
             var fullPath = Path.GetFullPath(filePath);
             var directory = Path.GetDirectoryName(fullPath);
 
             var fileName = Path.GetFileName(fullPath);
-            if(string.IsNullOrWhiteSpace(fileName))
+            if (string.IsNullOrWhiteSpace(fileName))
                 throw new Exception($"There is no file specified in the path  {fullPath}!");
 
             var root = Directory.GetDirectoryRoot(Directory.GetCurrentDirectory());
@@ -100,7 +100,7 @@ public static class Helpers
             }
             else
             {
-                if(string.IsNullOrWhiteSpace(directory))
+                if (string.IsNullOrWhiteSpace(directory))
                     throw new Exception($"There is no any folder specified in the path {fullPath}!");
 
                 Directory.CreateDirectory(Path.Combine(root, directory));
@@ -111,7 +111,7 @@ public static class Helpers
                 fullPath = Path.Combine(root, directory, fileName);
                 stdOutTxt = string.IsNullOrWhiteSpace(stdOutTxt) ? "" : stdOutTxt + Environment.NewLine;
 
-                if(typeOfOperator == TypeOfOperator.AppendStdOut 
+                if (typeOfOperator == TypeOfOperator.AppendStdOut
                     || typeOfOperator == TypeOfOperator.AppendStdErr)
                 {
                     File.AppendAllText(fullPath, stdOutTxt);
@@ -119,10 +119,10 @@ public static class Helpers
                 else
                 {
                     File.WriteAllText(fullPath, stdOutTxt);
-                }                
+                }
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
         }
@@ -130,22 +130,70 @@ public static class Helpers
 
     public static bool IsValidFilePath(string filePath)
     {
-        if(string.IsNullOrWhiteSpace(filePath))
+        if (string.IsNullOrWhiteSpace(filePath))
             return false;
 
         var filePathArray = filePath
             .Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
 
         var ret = true;
-        foreach(var el in filePathArray.Skip(1))
+        foreach (var el in filePathArray.Skip(1))
         {
             if (el.Contains(':'))
             {
                 ret = false;
                 break;
-            }                
+            }
         }
 
         return ret;
+    }
+
+    public static string? ReadLineWithAutoComplete(string[] builtIns)
+    {
+        var ret = new StringBuilder();
+
+        while (true)
+        {
+            var consoleKeyInfo = Console.ReadKey(true);
+            var originalInput = ret.ToString();
+
+            if(consoleKeyInfo.KeyChar != '\0' && !char.IsControl(consoleKeyInfo.KeyChar))
+            {
+                ret.Append(consoleKeyInfo.KeyChar);
+                Console.Write(consoleKeyInfo.KeyChar);
+                continue;
+            }
+
+            if(consoleKeyInfo.Key == ConsoleKey.Backspace && ret.Length > 0)
+            {
+                ret.Length--;
+                Console.Write("\b \b");
+                continue;
+            }
+
+            if(consoleKeyInfo.Key == ConsoleKey.Enter)
+            {
+                Console.WriteLine();
+                return ret.ToString();
+            }
+
+            if (consoleKeyInfo.Key == ConsoleKey.Tab && !string.IsNullOrWhiteSpace(originalInput))
+            {
+                var prefix = originalInput.TrimEnd();
+                var autoCompletedInput = builtIns
+                    .FirstOrDefault(o => o.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+
+                if(!string.IsNullOrWhiteSpace(autoCompletedInput))
+                {
+                    Console.Write($"\r$ {new string(' ', originalInput.Length)}");
+                    Console.Write($"\r$ ");
+
+                    ret.Clear();
+                    ret.Append(autoCompletedInput + " ");
+                    Console.Write(ret.ToString());
+                }
+            }
+        }
     }
 }

@@ -28,7 +28,7 @@ public sealed class Commands
 
     public Commands(){ }
 
-    public Commands(string userInput)
+    public Commands(string? userInput)
     {
         if(!string.IsNullOrWhiteSpace(userInput))
         {

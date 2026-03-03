@@ -5,13 +5,16 @@ class Program
         while (true)
         {
             Console.Write("$ ");
-            
-            string? consoleInput = Console.ReadLine();
-            string userInput = string.Empty;
+
+            var builtIns = new Commands().BuiltInsArray;
+          
+            string? consoleInput = Helpers.ReadLineWithAutoComplete(builtIns);
+            string? userInput = string.Empty;
 
             if (!string.IsNullOrWhiteSpace(consoleInput))
             {
                 userInput = consoleInput;
+                consoleInput = null;
             }
 
             var command = new Commands(userInput);
