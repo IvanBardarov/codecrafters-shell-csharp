@@ -193,6 +193,13 @@ public static class Helpers
                     ret.Append(autoCompletedInput + " ");
                     Console.Write(ret.ToString());
                 }
+                else
+                {
+                    if(OperatingSystem.IsWindows())
+                        Console.Beep();
+                    else if(OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+                        Console.Write("\x07");
+                }
             }
         }
     }
