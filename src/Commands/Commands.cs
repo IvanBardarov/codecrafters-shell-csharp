@@ -19,7 +19,6 @@ public sealed class Commands
     public string[]? Files { get; private set; }
     public bool IsExecutable { get; private set; }
     public string? ExecutableFolder { get; private set; }
-    public List<string> ExecutableExternalCommands { get; private set; } = new List<string>();
     public string? RedirectToFile { get; private set; }
     public TypeOfOperator TypeOfOperator { get; private set; }
     public bool Error { get; private set; }
@@ -31,8 +30,6 @@ public sealed class Commands
     {
         PathEnvironment = Environment.GetEnvironmentVariable("PATH");
         Folders = PathEnvironment?.Split(Path.PathSeparator);
-
-        ExecutableExternalCommands = FileHelpers.GetExecutableCommands(Folders);
     }
 
     public Commands(string? userInput) : this()
@@ -123,15 +120,12 @@ public sealed class Commands
                         {
                             Files = Directory.GetFiles(folder);
 
-                            ExecutableExternalCommands.AddRange(Files);
-
                             string? executableFolder = null;
                             var executableExternalCommands = new List<string>();
 
                             if (FileHelpers.IsFileExecutable(Files, Command, ref executableFolder, ref executableExternalCommands))
                             {
                                 ExecutableFolder = executableFolder;
-                                ExecutableExternalCommands = executableExternalCommands;
                                 using Process? process = ExternalCommand();
 
                                 break;
@@ -233,7 +227,6 @@ public sealed class Commands
                             if (FileHelpers.IsFileExecutable(files, arguments, ref executableFolder, ref executableExternalCommands))
                             {
                                 ExecutableFolder = executableFolder;
-                                ExecutableExternalCommands = executableExternalCommands;
                                 IsExecutable = true;
                                 ret = $"{arguments} is {Path.Combine(folder, arguments)}";
                                 break;

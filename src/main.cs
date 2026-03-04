@@ -8,9 +8,9 @@ class Program
 
             var initialCommandObject = new Commands();
             var builtIns = initialCommandObject.BuiltInsArray;
-            var executableExternalCommands = initialCommandObject.ExecutableExternalCommands;
+            var folders = initialCommandObject.Folders;
 
-            string? consoleInput = UserInputHelpers.ReadLineWithAutoComplete(builtIns, executableExternalCommands);
+            string? consoleInput = UserInputHelpers.ReadLineWithAutoComplete(builtIns, folders);
             string? userInput = string.Empty;
 
             if (!string.IsNullOrWhiteSpace(consoleInput))

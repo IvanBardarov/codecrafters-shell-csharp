@@ -79,7 +79,7 @@ public static class UserInputHelpers
         return ret;
     }
 
-    public static string? ReadLineWithAutoComplete(string[] builtIns, List<string> executableExternalCommands)
+    public static string? ReadLineWithAutoComplete(string[] builtIns, string[]? folders)
     {
         var ret = new StringBuilder();
 
@@ -88,21 +88,21 @@ public static class UserInputHelpers
             var consoleKeyInfo = Console.ReadKey(true);
             var originalInput = ret.ToString();
 
-            if(consoleKeyInfo.KeyChar != '\0' && !char.IsControl(consoleKeyInfo.KeyChar))
+            if (consoleKeyInfo.KeyChar != '\0' && !char.IsControl(consoleKeyInfo.KeyChar))
             {
                 ret.Append(consoleKeyInfo.KeyChar);
                 Console.Write(consoleKeyInfo.KeyChar);
                 continue;
             }
 
-            if(consoleKeyInfo.Key == ConsoleKey.Backspace && ret.Length > 0)
+            if (consoleKeyInfo.Key == ConsoleKey.Backspace && ret.Length > 0)
             {
                 ret.Length--;
                 Console.Write("\b \b");
                 continue;
             }
 
-            if(consoleKeyInfo.Key == ConsoleKey.Enter)
+            if (consoleKeyInfo.Key == ConsoleKey.Enter)
             {
                 Console.WriteLine();
                 return ret.ToString();
@@ -113,15 +113,40 @@ public static class UserInputHelpers
                 var prefix = originalInput.TrimEnd();
                 var builtInMatch = builtIns
                     .FirstOrDefault(o => o.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
-                var externalExecutableMatch = executableExternalCommands
-                    .FirstOrDefault(o => o.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
 
-                string ? autoCompletedInput = null;
-                
-                if(!string.IsNullOrWhiteSpace(builtInMatch))
+                string? autoCompletedInput = null;
+
+                if (!string.IsNullOrWhiteSpace(builtInMatch))
                     autoCompletedInput = builtInMatch;
-                else if(!string.IsNullOrWhiteSpace(externalExecutableMatch))
-                    autoCompletedInput = externalExecutableMatch;
+                else
+                {
+                    if (folders != null)
+                    {
+                        try
+                        {
+                            foreach (var folder in folders)
+                            {
+                                if (Directory.Exists(folder))
+                                {
+                                    var files = Directory.GetFiles(folder);
+                                    var fileNames = files.Select(o => Path.GetFileNameWithoutExtension(o)).ToArray();
+                                    var executableExternalMatch = fileNames
+                                        .FirstOrDefault(o => o.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+                                    if (!string.IsNullOrWhiteSpace(executableExternalMatch))
+                                    {
+                                        autoCompletedInput = executableExternalMatch;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+                    }
+                }
+
 
                 if (!string.IsNullOrWhiteSpace(autoCompletedInput))
                 {
