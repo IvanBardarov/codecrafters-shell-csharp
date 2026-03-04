@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+using System.Diagnostics.Metrics;
 using System.Text;
 
 public static class UserInputHelpers
@@ -82,6 +84,7 @@ public static class UserInputHelpers
     public static string? ReadLineWithAutoComplete(string[] builtIns, string[]? folders)
     {
         var ret = new StringBuilder();
+        var tabCounter = 0;
 
         while (true)
         {
@@ -110,11 +113,14 @@ public static class UserInputHelpers
 
             if (consoleKeyInfo.Key == ConsoleKey.Tab && !string.IsNullOrWhiteSpace(originalInput))
             {
+                tabCounter++;
+
                 var prefix = originalInput.TrimEnd();
+                string? autoCompletedInput = null;
+
+                var matches = new List<string>();
                 var builtInMatch = builtIns
                     .FirstOrDefault(o => o.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
-
-                string? autoCompletedInput = null;
 
                 if (!string.IsNullOrWhiteSpace(builtInMatch))
                     autoCompletedInput = builtInMatch;
@@ -130,15 +136,16 @@ public static class UserInputHelpers
                                 {
                                     var files = Directory.GetFiles(folder);
                                     var fileNames = files.Select(o => Path.GetFileNameWithoutExtension(o)).ToArray();
-                                    var executableExternalMatch = fileNames
-                                        .FirstOrDefault(o => o.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
-                                    if (!string.IsNullOrWhiteSpace(executableExternalMatch))
-                                    {
-                                        autoCompletedInput = executableExternalMatch;
-                                        break;
-                                    }
+
+                                    matches.AddRange(fileNames
+                                        .Where(o => o.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                                        .ToList());
+
+                                    matches.Sort();
+                                    matches = matches.Distinct().ToList();
                                 }
                             }
+                            autoCompletedInput = matches.Count == 1 ? matches[0] : prefix;
                         }
                         catch (Exception ex)
                         {
@@ -147,24 +154,63 @@ public static class UserInputHelpers
                     }
                 }
 
-
-                if (!string.IsNullOrWhiteSpace(autoCompletedInput))
-                {
-                    Console.Write($"\r$ {new string(' ', originalInput.Length)}");
-                    Console.Write($"\r$ ");
-
-                    ret.Clear();
-                    ret.Append(autoCompletedInput + " ");
-                    Console.Write(ret.ToString());
-                }
+                if(!string.IsNullOrWhiteSpace(autoCompletedInput) &&
+                    (!string.IsNullOrWhiteSpace(builtInMatch) || matches.Count > 0))
+                    RefreshTheInputAfterTabKeyPressed(ret, originalInput, autoCompletedInput, matches, tabCounter);
                 else
-                {
-                    if (OperatingSystem.IsWindows())
-                        Console.Beep();
-                    else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
-                        Console.Write("\x07");
-                }
+                    BeepAfterTabKeyPressedForTheFirstTime();
             }
         }
+    }
+
+    private static void RefreshTheInputAfterTabKeyPressed(StringBuilder ret, string originalInput, string autoCompletedInput,
+        List<string> matches, int tabCounter)
+    {
+        var matchesOutput = matches.Count > 0 ? $"{string.Join("  ", matches).Trim()}" : string.Empty;
+        ret.Clear();
+
+        var output = string.Empty;
+
+        switch (matches.Count)
+        {
+            case 0:
+                output = autoCompletedInput.Length >= originalInput.Length ? autoCompletedInput + " " : originalInput;
+                ret.Append(autoCompletedInput + " ");
+                break;
+            case 1:
+                output = autoCompletedInput + " ";
+                ret.Append(autoCompletedInput + " ");
+                break;
+            case >= 2:
+                output = autoCompletedInput;
+                ret.Append(autoCompletedInput);
+                if(tabCounter == 1)
+                    BeepAfterTabKeyPressedForTheFirstTime();
+                break;
+            default:
+                break;
+        }
+
+        if (matches.Count > 1 && tabCounter >= 2)
+        {
+            Console.WriteLine();
+            Console.WriteLine(matchesOutput);
+            Console.Write($"\r$ ");
+        }
+        else
+        {
+            Console.Write($"\r$ {new string(' ', originalInput.Length)}");
+            Console.Write($"\r$ ");
+        }
+
+        Console.Write(output);
+    }
+
+    private static void BeepAfterTabKeyPressedForTheFirstTime()
+    {
+        if (OperatingSystem.IsWindows())
+            Console.Beep();
+        else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+            Console.Write("\x07");
     }
 }
